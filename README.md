@@ -1,9 +1,6 @@
-# catchment-delineation
+# rapid-watershed-delineation
 
-## Some caveats
-
-* For now, there is no documentation for this API. If the API eventually becomes robust enough and popular enough, we might make it a bit more formal.
-* We might also restrict/control access in the future. For now, anybody can use it (definitely not a limitation!), though if you do use it please use it gently, as it’s currently paid for by the author.
-* Larger catchments won’t be delineated. This is due to the amount of time it takes to delineate larger catchments: http requests time out after a while. You've seen this when loading a page and the page doesn’t respond quickly: you get a timeout error in your browser. Same thing here. We need to figure out a way to improve the efficiency, perhaps by leveraging Google Earth Engine. Until then, smaller catchments only.
-* An algorithm for catchments that span the underlying datasets have not been developed.
-* Asia is not currently included.
+* This is a brand new effort to create a publicly accessible web API to rapidly delineate a watershed in most parts of the world.
+* This is in progress. No actual API endpoint exists yet.
+* The tool uses both traditional and hybrid delineation methods. Both techniques rely on [HydroSHEDS](http://www.hydrosheds.org/). The hybrid method searches [HydroBASINS](http://www.hydrosheds.org/page/hydrobasins), then fills in missing areas with traditional delineation using the HydroSHEDS flow direction dataset (15 arc-seconds). The hybrid method is used for mainstem rivers. In non-mainstem basins, the traditional delineation method alone is used. Determining which method to use is a critical peice of the algorithmic magic underpinning this tool.
+* Detailed documentation forthcoming.
