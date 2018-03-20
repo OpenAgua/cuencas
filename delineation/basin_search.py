@@ -1,7 +1,6 @@
 import fiona
 import pandas as pd
 from shapely.ops import cascaded_union
-from time import time
 from matplotlib.path import Path
 from osgeo import ogr
 
@@ -56,7 +55,6 @@ def get_basins(df00, hydrobasins, props00, max_level, omit_sinks=True):
 
     all_basins = []
     df00x = df00.iloc[:]
-    # start_time = time()
     for level in range(2, max_level + 1):
         PFAFp = 'PFAF_{}'.format(level - 1)
         PFAF = 'PFAF_{}'.format(level)
@@ -66,9 +64,7 @@ def get_basins(df00, hydrobasins, props00, max_level, omit_sinks=True):
 
         PFAFlist = list(set(df00x[PFAF].tolist()))  # list of current level PFAFs
 
-        #         print('loading dataset: %s' % (time() - start_time))
         basins = hydrobasins[level]
-        #         print('loaded dataset: %s' % (time() - start_time))
         basins = basins.loc[basins['PFAF_ID'].isin(PFAFlist)]  # initial filter to current PFAF
 
         # filter out lower basins; this basically follows a drop of water downslope
@@ -77,7 +73,6 @@ def get_basins(df00, hydrobasins, props00, max_level, omit_sinks=True):
         this_basin_id = this_basin.iloc[0]['HYBAS_ID']
         to_include = []
         PFAF_IDs = []  # for filtering df00 so we don't query this region next time
-        #         print('starting subbasin search: %s' % (time() - start_time))
         for i, subbasin in basins.iterrows():
             if omit_sinks:
                 next_down = subbasin['NEXT_DOWN']
@@ -107,18 +102,14 @@ def get_basins(df00, hydrobasins, props00, max_level, omit_sinks=True):
                         next_down = down_basin_props['NEXT_SINK']
                 else:
                     break  # it's unclear how we could get here
-        #         print('finished subbasin search: %s' % (time() - start_time))
         to_include_set = set(to_include)
         basins = basins.loc[basins['HYBAS_ID'].isin(to_include_set)]
         # basins['OA_ID'] = OA_ID
         # basins['NAME'] = OA_NAME
-        #         print('merging with all_basins: %s' % (time() - start_time))
         if not basins.empty:
             all_basins.append(basins)
-        #         print('finished merge: %s' % (time() - start_time))
 
         df00x = df00x.loc[~df00x[PFAF].isin(PFAF_IDs)]  # filter out this region
-    # print('search time: %s' % (time() - start_time))
 
     return all_basins
 
@@ -130,7 +121,6 @@ def get_basins_flat(df00, hydrobasins, props00, max_level, omit_sinks=True):
 
     all_basins = []
     df00x = df00.iloc[:]
-    # start_time = time()
     for level in range(2, max_level + 1):
         PFAFp = 'PFAF_{}'.format(level - 1)
         PFAF = 'PFAF_{}'.format(level)
@@ -140,9 +130,7 @@ def get_basins_flat(df00, hydrobasins, props00, max_level, omit_sinks=True):
 
         PFAFlist = list(set(df00x[PFAF].tolist()))  # list of current level PFAFs
 
-        #         print('loading dataset: %s' % (time() - start_time))
         basins = hydrobasins[level]
-        #         print('loaded dataset: %s' % (time() - start_time))
         basins = basins.loc[basins['PFAF_ID'].isin(PFAFlist)]  # initial filter to current PFAF
 
         # filter out lower basins; this basically follows a drop of water downslope
@@ -151,7 +139,6 @@ def get_basins_flat(df00, hydrobasins, props00, max_level, omit_sinks=True):
         this_basin_id = this_basin.iloc[0]['HYBAS_ID']
         to_include = []
         PFAF_IDs = []  # for filtering df00 so we don't query this region next time
-        #         print('starting subbasin search: %s' % (time() - start_time))
         for i, subbasin in basins.iterrows():
             if omit_sinks:
                 next_down = subbasin['NEXT_DOWN']
@@ -181,48 +168,37 @@ def get_basins_flat(df00, hydrobasins, props00, max_level, omit_sinks=True):
                         next_down = down_basin_props['NEXT_SINK']
                 else:
                     break  # it's unclear how we could get here
-        #         print('finished subbasin search: %s' % (time() - start_time))
         to_include_set = set(to_include)
         basins = basins.loc[basins['HYBAS_ID'].isin(to_include_set)]
         # basins['OA_ID'] = OA_ID
         # basins['NAME'] = OA_NAME
-        #         print('merging with all_basins: %s' % (time() - start_time))
         if not basins.empty:
             all_basins.append(basins)
-        #         print('finished merge: %s' % (time() - start_time))
 
         df00x = df00x.loc[~df00x[PFAF].isin(PFAF_IDs)]  # filter out this region
-    # print('search time: %s' % (time() - start_time))
 
     return all_basins
 
 
 def delineate_from_basins(hydropath, h5path, point, hydrobasins, region01, feature0x, max_level=7, omit_sinks=True):
-    start_time = time()
-
     path01 = hydropath.format(r=region01, l=0, e='shp')
     PFAF_X = 'PFAF_{}'.format(max_level)
     PFAF_X_ID = feature0x.iloc[0]['PFAF_ID']
 
     feature00 = get_feature00(path01, point, PFAF_X, PFAF_X_ID)
-    print('found PFAF 12 feature: %s' % (time() - start_time))
 
     if feature00 is None:
         return None, None
 
     props00 = feature00['properties']
-    # print('found PFAF 12 feature: %s' % (time() - start_time))
 
     # load the level00 lookup table
     df00 = pd.read_hdf(h5path, 'level00')
-    print('loaded level 00 lookup table: %s' % (time() - start_time))
 
     df00x = df00.loc[df00['MAIN_BAS'] == props00['MAIN_BAS']]
-    print('filtered continent to basin: %s' % (time() - start_time))
 
     all_basins = get_basins(df00x, hydrobasins, props00, max_level, omit_sinks)
     # all_basins = get_basins_flat(df00x, hydrobasins, props00, max_level, omit_sinks)
-    print('found basins: %s' % (time() - start_time))
 
     basin = None
     polygons = []

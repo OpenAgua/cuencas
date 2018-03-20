@@ -3,8 +3,12 @@ import os, tempfile
 from osgeo import gdal, ogr
 import fiona
 from shapely.ops import cascaded_union
+from shapely.geometry import mapping
 from matplotlib.path import Path
 import numpy as np
+import rasterio
+from time import time
+import rasterio.mask as rmask
 
 
 def lonlat2xy(lon, lat, gt):
@@ -14,7 +18,21 @@ def lonlat2xy(lon, lat, gt):
     return x, y
 
 
+def latlon2xy_affine(lon, lat, gt):
+    """Convert the map coordinates (lon, lat) to grid coordinates (x, y)"""
+    x = int((lon - gt[2]) / gt[0])  # x pixel
+    y = int((lat - gt[5]) / gt[4])  # y pixel
+    return x, y
+
+
 def xy2lonlat(x, y, gt):
+    """Convert grid coordinates (x, y) to map coordinates (lon, lat)"""
+    lon = x * gt[1] + gt[0]
+    lat = y * gt[5] + gt[3]
+    return lon, lat
+
+
+def xy2lonlat_affine(x, y, gt):
     """Convert grid coordinates (x, y) to map coordinates (lon, lat)"""
     lon = x * gt[1] + gt[0]
     lat = y * gt[5] + gt[3]
@@ -123,71 +141,18 @@ def get_delineation_mode(accpath, point, basins, feature, region, cell_size):
         mode = 'traditional'
     else:
 
+        # get point acc
         bil = gdal.Open(accpath.format(region, cell_size))
         acc = bil.GetRasterBand(1)
         gt = bil.GetGeoTransform()
         x, y = lonlat2xy(lng, lat, gt)
         point_acc = acc.ReadAsArray(x, y, 1, 1)[0][0]
 
-        max_up_acc = None
-        with tempfile.TemporaryDirectory() as tmpdir:
-            next_up = cascaded_union([row['geometry'] for i, row in next_ups.iterrows()])
-            west, south, east, north = next_up.bounds
-            xmin, ymax = lonlat2xy(west, south, gt)
-            xmax, ymin = lonlat2xy(east, north, gt)
-            cols = xmax - xmin + 1
-            rows = ymax - ymin + 1
-
-            # clipped numpy array from shape (next_up)
-
-            # create layer
-            driver = ogr.GetDriverByName("ESRI Shapefile")
-            tmppath = os.path.join(tmpdir, 'next_up.shp')
-            tmpsrc = driver.CreateDataSource(tmppath)
-            tmplayer = tmpsrc.CreateLayer('next_up', srs=None, geom_type=ogr.wkbPolygon)
-            valField = ogr.FieldDefn("VAL", ogr.OFTInteger)
-            tmplayer.CreateField(valField)
-
-            # create the polygon
-            poly = ogr.Geometry(ogr.wkbPolygon)
-            for i, n in next_ups.iterrows():
-                ring = ogr.Geometry(ogr.wkbLinearRing)
-                for coord in list(n['geometry'].exterior.coords):
-                    ring.AddPoint(coord[0], coord[1])
-                poly.AddGeometry(ring)
-
-            # add the polygon
-            # Create the feature and set values
-            featureDefn = tmplayer.GetLayerDefn()
-            feature = ogr.Feature(featureDefn)
-            feature.SetGeometry(poly)
-            feature.SetField("VAL", 1)
-            tmplayer.CreateFeature(feature)
-
-            # rasterize layer
-            originLon, originLat = xy2lonlat(xmin, ymin, gt)
-            cellWidth = cellHeight = cell_size / 60 / 60
-            tmptifpath = os.path.join(tmpdir, 'next_up.tif')
-            geotiff = gdal.GetDriverByName('GTiff').Create(tmptifpath, cols, rows, 1, gdal.GDT_Byte)
-            geotiff.SetGeoTransform((originLon, cellWidth, 0, originLat, 0, -cellHeight))
-            band = geotiff.GetRasterBand(1)
-            band.SetNoDataValue(0)
-            band.FlushCache()
-
-            gdal.RasterizeLayer(geotiff, [1], tmplayer, options=["ATTRIBUTE=VAL"])
-
-            # clipped numpy array from flow accumulation grid
-            acc_area = acc.ReadAsArray(xmin, ymin, cols, rows)  # grid origin is upper left
-            acc_area = np.array(acc_area)
-
-            # area defining upstream shape
-            next_up_area = band.ReadAsArray()
-            next_up_area = np.array(next_up_area)
-
-            # flow accumulation within upstream shape
-            up_acc_area = acc_area * next_up_area
-
-            max_up_acc = up_acc_area.max()
+        # get up acc
+        features = [mapping(row['geometry']) for i, row in next_ups.iterrows()]
+        with rasterio.open(accpath.format(region, cell_size)) as src:
+            up_acc_area, up_acc_transform = rmask.mask(src, features, crop=True)
+        max_up_acc = up_acc_area.max()
 
         if max_up_acc > point_acc:
             mode = 'traditional'

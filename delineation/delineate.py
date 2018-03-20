@@ -1,11 +1,9 @@
 import geopandas as gpd
 import os
-from time import time
 
 from osgeo import gdal
-
 from shapely.ops import cascaded_union
-from shapely.geometry import mapping
+from shapely.geometry import mapping, JOIN_STYLE
 
 from .basin_search import delineate_from_basins
 from .grid_search import delineate_missing_from_grid
@@ -13,7 +11,6 @@ from .utils import get_grid_region, get_region01, get_delineation_mode
 
 
 def delineate(rootpath=None, point=None, max_level=7, cell_size=15, omit_sinks=True, feature_type='Feature',
-              start_time=time(),
               flavor='geojson',
               buffer_eps=0.0025, mode='traditional'):
     """Core delineation routine. Point should be as in GeoJSON: [lng, lat]"""
@@ -43,9 +40,9 @@ def delineate(rootpath=None, point=None, max_level=7, cell_size=15, omit_sinks=T
     for i, level in enumerate(range(max_level, 0, -1)):
         path = PATH.format(r=region01, l=level, e='shp')
         basins = gpd.read_file(path)
-
         if i == 0:
             feature0x = basins.cx[lng - 0.001:lng + 0.001, lat - 0.001:lat + 0.001]
+
             props0x = feature0x.iloc[0]
             remnant = props0x['geometry']
 
@@ -55,8 +52,6 @@ def delineate(rootpath=None, point=None, max_level=7, cell_size=15, omit_sinks=T
                 break
 
         hydrobasins[level] = basins
-
-    print('loaded hydrobasins: %s' % (time() - start_time))
 
     # STEP 3: Delineate from HydroBASINS
 
@@ -75,6 +70,7 @@ def delineate(rootpath=None, point=None, max_level=7, cell_size=15, omit_sinks=T
     basin = main
     if remaining:
         simplified = remaining.simplify(0.0041)
+        # simplified = remaining
     else:
         simplified = None
     if main and simplified:
@@ -82,13 +78,21 @@ def delineate(rootpath=None, point=None, max_level=7, cell_size=15, omit_sinks=T
     elif simplified:
         basin = simplified
     if simplified:
-        basin = basin.buffer(buffer_eps).buffer(-buffer_eps)
+        # we need to cleanup slivers created on join
+        # method from: https://gis.stackexchange.com/questions/120286/removing-small-polygons-gaps-in-a-shapely-polygon
+        eps = 0.005
+        basin = basin.buffer(eps, 1, join_style=JOIN_STYLE.mitre).buffer(-eps, 1, join_style=JOIN_STYLE.mitre)
+
 
     if flavor == 'geojson':
-        geometry = mapping(basin)
+        # coordinates = [mapping(basin.exterior)['coordinates']]
+        coordinates = mapping(basin)['coordinates']
         feature = {
             'type': 'Feature',
-            'geometry': geometry,
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': coordinates
+            },
             'properties': {}
         }
         if feature_type == 'Feature':
