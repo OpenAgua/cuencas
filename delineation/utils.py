@@ -1,13 +1,8 @@
-import os, tempfile
-
-from osgeo import gdal, ogr
+from osgeo import gdal
 import fiona
-from shapely.ops import cascaded_union
 from shapely.geometry import mapping
 from matplotlib.path import Path
-import numpy as np
 import rasterio
-from time import time
 import rasterio.mask as rmask
 
 

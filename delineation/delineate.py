@@ -10,9 +10,8 @@ from .grid_search import delineate_missing_from_grid
 from .utils import get_grid_region, get_region01, get_delineation_mode
 
 
-def delineate(rootpath=None, point=None, max_level=7, cell_size=15, omit_sinks=True, feature_type='Feature',
-              flavor='geojson',
-              buffer_eps=0.0025, mode='traditional'):
+def delineate(rootpath=None, point=None, name=None, max_level=7, cell_size=15, omit_sinks=True, feature_type='Feature',
+              flavor='geojson', mode='traditional'):
     """Core delineation routine. Point should be as in GeoJSON: [lng, lat]"""
 
     # STEP 1: Intialization
@@ -69,7 +68,7 @@ def delineate(rootpath=None, point=None, max_level=7, cell_size=15, omit_sinks=T
 
     basin = main
     if remaining:
-        simplified = remaining.simplify(0.0041)
+        simplified = remaining.simplify(15/60/60)
         # simplified = remaining
     else:
         simplified = None

@@ -70,78 +70,16 @@ def get_basins(df00, hydrobasins, props00, max_level, omit_sinks=True):
         # filter out lower basins; this basically follows a drop of water downslope
         # if a subbasin contributes to the current basin, then include it (and filter it out from future searchs)
         this_basin = basins.loc[basins['PFAF_ID'] == props00[PFAF]]
+        if this_basin.empty:
+            continue
         this_basin_id = this_basin.iloc[0]['HYBAS_ID']
         to_include = []
         PFAF_IDs = []  # for filtering df00 so we don't query this region next time
         for i, subbasin in basins.iterrows():
             if omit_sinks:
                 next_down = subbasin['NEXT_DOWN']
-            next_sink = subbasin['NEXT_SINK']
-            main_basin = subbasin['MAIN_BAS']
-            if omit_sinks and main_basin != next_sink:
-                PFAF_IDs.append(subbasin['PFAF_ID'])
-                continue
-            subbasin_chain = [subbasin['HYBAS_ID']]
-            PFAF_chain = [subbasin['PFAF_ID']]
-            if subbasin['HYBAS_ID'] in to_include:
-                continue
-            while next_down:
-                if next_down == this_basin_id or next_down in to_include:
-                    to_include.extend(subbasin_chain)
-                    PFAF_IDs.extend(PFAF_chain)
-                    break
-
-                down_basin = basins.loc[basins['HYBAS_ID'] == next_down]
-                if not down_basin.empty:
-                    down_basin_props = down_basin.iloc[0]
-                    subbasin_chain.append(down_basin_props['HYBAS_ID'])
-                    PFAF_chain.append(down_basin_props['PFAF_ID'])
-                    if omit_sinks:
-                        next_down = down_basin_props['NEXT_DOWN']
-                    else:
-                        next_down = down_basin_props['NEXT_SINK']
-                else:
-                    break  # it's unclear how we could get here
-        to_include_set = set(to_include)
-        basins = basins.loc[basins['HYBAS_ID'].isin(to_include_set)]
-        # basins['OA_ID'] = OA_ID
-        # basins['NAME'] = OA_NAME
-        if not basins.empty:
-            all_basins.append(basins)
-
-        df00x = df00x.loc[~df00x[PFAF].isin(PFAF_IDs)]  # filter out this region
-
-    return all_basins
-
-
-def get_basins_flat(df00, hydrobasins, props00, max_level, omit_sinks=True):
-    # NOTE: This only works for subwats in the main stem. To search side subwats,
-    # an additional search of the original df00 needs to be performed to omit
-    # higher level subwats that don't contribute to the smallest subat
-
-    all_basins = []
-    df00x = df00.iloc[:]
-    for level in range(2, max_level + 1):
-        PFAFp = 'PFAF_{}'.format(level - 1)
-        PFAF = 'PFAF_{}'.format(level)
-
-        # print(PFAF)
-        df00x = df00x.loc[df00x[PFAFp] == props00[PFAFp]]  # filter to include only PFAFs of interest
-
-        PFAFlist = list(set(df00x[PFAF].tolist()))  # list of current level PFAFs
-
-        basins = hydrobasins[level]
-        basins = basins.loc[basins['PFAF_ID'].isin(PFAFlist)]  # initial filter to current PFAF
-
-        # filter out lower basins; this basically follows a drop of water downslope
-        # if a subbasin contributes to the current basin, then include it (and filter it out from future searchs)
-        this_basin = basins.loc[basins['PFAF_ID'] == props00[PFAF]]
-        this_basin_id = this_basin.iloc[0]['HYBAS_ID']
-        to_include = []
-        PFAF_IDs = []  # for filtering df00 so we don't query this region next time
-        for i, subbasin in basins.iterrows():
-            if omit_sinks:
-                next_down = subbasin['NEXT_DOWN']
+            else:
+                next_down = subbasin['NEXT_SINK']
             next_sink = subbasin['NEXT_SINK']
             main_basin = subbasin['MAIN_BAS']
             if omit_sinks and main_basin != next_sink:
@@ -198,7 +136,6 @@ def delineate_from_basins(hydropath, h5path, point, hydrobasins, region01, featu
     df00x = df00.loc[df00['MAIN_BAS'] == props00['MAIN_BAS']]
 
     all_basins = get_basins(df00x, hydrobasins, props00, max_level, omit_sinks)
-    # all_basins = get_basins_flat(df00x, hydrobasins, props00, max_level, omit_sinks)
 
     basin = None
     polygons = []

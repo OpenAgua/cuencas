@@ -89,7 +89,7 @@ def delineate_missing_from_grid(point, region, dirpath, geodriver, cell_size, ma
     # create the shapes
     transform = from_origin(originLon, originLat, cellWidth, cellHeight)
     mask = array != 0
-    shapes = features.shapes(array, mask=mask, transform=transform)
+    shapes = features.shapes(array, mask=mask, connectivity=8, transform=transform)
 
     # there may be more than one main feature
     polygons = []
