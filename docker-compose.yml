@@ -3,7 +3,7 @@ services:
   web:
     image: "openagua/rapid-watershed-delineation:latest"
     ports:
-     - "8000:8000"
+     - "80:8000"
   rabbit:
     image: "rabbitmq:3-management"
     hostname: "rabbit"
