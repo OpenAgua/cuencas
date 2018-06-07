@@ -4,6 +4,8 @@ services:
     image: "openagua/rapid-watershed-delineation:latest"
     ports:
      - "80:8000"
+    environment:
+      CUENCAS_PATH: "~/data"
   rabbit:
     image: "rabbitmq:3-management"
     hostname: "rabbit"
