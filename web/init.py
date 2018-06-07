@@ -3,6 +3,7 @@ from simpledbf import Dbf5
 
 
 def main(path):
+    print("initializing...")
     if not os.path.exists(path):
         # make the directory, but only if the root path exists (e.g., if '/efs' exists)
         if os.path.exists(os.path.abspath(path.split('/')[0])):
@@ -15,12 +16,11 @@ def main(path):
     outpath = os.path.join(path, 'hydrosheds')
     if not os.path.exists(outpath):
         os.makedirs(outpath)
-    # for region in ['af', 'as', 'au', 'ca', 'eu', 'na', 'sa']:
-    for region in ['au']:
+    for region in ['af', 'as', 'au', 'ca', 'eu', 'na', 'sa']:
         print('Downloading HydroSHEDS for {}'.format(region))
         for grid in ['dir', 'acc']:
-            response = requests.get(
-                'https://s3-us-west-2.amazonaws.com/cuencas/hydrosheds/{}_{}_15s_bil.zip'.format(region, grid))
+            zipname = '{}_{}_15s_bil.zip'.format(region, grid)
+            response = requests.get('https://s3-us-west-2.amazonaws.com/cuencas/hydrosheds/{}'.format(zipname))
             file = io.BytesIO(response.content)
             zf = zipfile.ZipFile(file)
             members = [n for n in zf.namelist() if n[-4:] not in ['.htm', '.pdf']]
@@ -30,8 +30,7 @@ def main(path):
     outpath = os.path.join(path, 'hydrobasins')
     if not os.path.exists(outpath):
         os.makedirs(outpath)
-    # for region in ['af', 'ar', 'as', 'au', 'eu', 'na', 'sa', 'si']:
-    for region in ['au']:
+    for region in ['af', 'ar', 'as', 'au', 'eu', 'na', 'sa', 'si']:
         print('Processing HydroBASINS for {}'.format(region))
         h5path = os.path.join(outpath, 'hybas_{}_v1c.h5'.format(region))
         if os.path.exists(h5path):

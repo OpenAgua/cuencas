@@ -26,8 +26,7 @@ RUN pip3 install numexpr tables
 ADD . /app
 WORKDIR /app
 
-# download HydroSHEDs and HydroBASINS
-RUN python3 init.py
+VOLUME ["/data"]
 
 EXPOSE 8000
 

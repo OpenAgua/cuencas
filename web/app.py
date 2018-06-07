@@ -1,6 +1,6 @@
 #!flask/bin/python
 import os
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, Response
 from celery import Celery
 from delineation.delineate import delineate
 import hashlib
