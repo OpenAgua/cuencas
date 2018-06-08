@@ -2,7 +2,7 @@ version: '2'
 services:
   web:
     restart: always
-    image: "openagua/rapid-watershed-delineation:latest"
+    build: ./web
     expose:
      - "8000"
     ports:
@@ -14,7 +14,7 @@ services:
     command:
       gunicorn web.app:app -b :8000 --name app --log-level=debug
   worker:
-    image: "openagua/rapid-watershed-delineation:latest"
+    build: ./web
     volumes:
       - "/data:/home/ubuntu/data"
     links:
