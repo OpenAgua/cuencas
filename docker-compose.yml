@@ -4,19 +4,19 @@ services:
     restart: always
     image: "openagua/rapid-watershed-delineation:latest"
     expose:
-     - 8000
+     - "8000"
     ports:
-     - 8000:8000
+     - "8000:8000"
     volumes:
-     - /data:/home/cuencas/hydrodata
-    environment:
-      CUENCAS_PATH: /home/david/cuencas/data
+     - "/data:./data"
+#    environment:
+#      CUENCAS_PATH: "../data"
     command:
       /usr/local/bin/gunicorn -w 2 -b :8000 web:app
   worker:
     image: openagua/rapid-watershed-delineation:latest
     volumes:
-      - /data:/home/cuencas/hydrodata
+      - "/data:./data"
     links:
       - rabbit
     depends_on:
