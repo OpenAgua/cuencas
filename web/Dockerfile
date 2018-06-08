@@ -12,7 +12,6 @@ RUN apt-add-repository ppa:ubuntugis/ppa \
     && apt-get update \
     && apt-get install -y gdal-bin python3-gdal python-numpy libgdal-dev
 
-#RUN pip3 install gdal --global-option=build_ext --global-option="-I/usr/include/gdal/"
 RUN pip3 install rasterio
 
 RUN pip3 install gunicorn celery pymongo
