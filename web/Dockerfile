@@ -15,7 +15,7 @@ RUN apt-add-repository ppa:ubuntugis/ppa \
 #RUN pip3 install gdal --global-option=build_ext --global-option="-I/usr/include/gdal/"
 RUN pip3 install rasterio
 
-RUN pip3 install celery pymongo
+RUN pip3 install gunicorn celery pymongo
 
 RUN pip3 install pandas
 RUN pip3 install fiona shapely geopandas kml2geojson simpledbf
