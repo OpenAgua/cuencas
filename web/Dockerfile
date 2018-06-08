@@ -17,3 +17,4 @@ RUN pip3 install --no-cache-dir gunicorn celery pymongo flask requests
 
 # bundle app source
 COPY . /app
+WORKDIR /app

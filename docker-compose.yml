@@ -6,13 +6,16 @@ services:
     expose:
      - "8000"
     ports:
-     - "8000:8000"
+     - "80:8000"
 #    volumes:
 #     - "/data:/home/ubuntu/data"
 #    environment:
 #      CUENCAS_PATH: "../data"
     command:
-      gunicorn app:app -b :8000 --name app --log-level=debug
+      gunicorn app:app -w 2 -b :8000 --name app
+    depends_on:
+      - rabbit
+      - mongo
   worker:
     image: "openagua/rapid-watershed-delineation:latest"
     volumes:
@@ -21,7 +24,8 @@ services:
       - rabbit
     depends_on:
       - rabbit
-    command: celery worker -B -A web.app.celery
+      - mongo
+    command: celery worker -A app.celery
 #  nginx:
 #    restart: always
 #    build: ./nginx

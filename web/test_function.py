@@ -5,7 +5,7 @@ import os
 from descartes import PolygonPatch
 import matplotlib.pyplot as plt
 
-from delineation.delineation import delineate
+from .delineation.delineation import delineate
 
 
 def run_test():

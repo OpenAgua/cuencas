@@ -1,21 +1,21 @@
-#!flask/bin/python
 import os
 from flask import Flask, request, Response
 from celery import Celery
-from delineation.delineate import delineate
 import hashlib
 import requests
 from pymongo import MongoClient
 
-app = Flask(__name__, instance_relative_config=True)
+from delineation import delineate
+
+app = Flask(__name__)
 app.config['BASEPATH'] = os.environ.get('CUENCAS_DATA_PATH', '/data')  # e.g., '/efs/hydrodata'
 
 # create celery worker
-app.config['CELERY_BROKER_URL'] = os.environ.get('CELERY_BROKER_URL', 'amqp://rabbitmq:rabbitmq@localhost:5672')
+app.config['CELERY_BROKER_URL'] = os.environ.get('CELERY_BROKER_URL', 'amqp://rabbitmq:rabbitmq@rabbit:5672')
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
-app.config['MONGO_URL'] = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+app.config['MONGO_URL'] = os.environ.get('MONGO_URL', 'mongodb://mongo:27017')
 
 
 @app.route('/')
@@ -108,7 +108,7 @@ def delineate_catchment_async(user_id, source_id, network_id, name, lat, lon, fe
                               'geojson': geojson
                           })
         except:
-            print('failed to post result!')
+            print('ERROR: failed to post result to {}'.format(dest))
 
 
 if __name__ == '__main__':

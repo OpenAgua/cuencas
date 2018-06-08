@@ -69,7 +69,11 @@ def get_grid_region(point, bilpath, cell_size):
         region = find_hydrosheds_region(lat, lon, exclude=region)
 
         # create the gdal flow direction grid from the bil
-        bil = gdal.Open(bilpath.format(region, cell_size))
+        try:
+            bil = gdal.Open(bilpath.format(region, cell_size))
+        except:
+            print('ERROR: path not found: {}'.format(bilpath))
+            raise
         center = None
 
         if bil:
