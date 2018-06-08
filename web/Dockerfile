@@ -25,10 +25,3 @@ RUN pip3 install numexpr tables
 # bundle app source
 ADD . /app
 WORKDIR /app
-
-VOLUME ["/data"]
-
-EXPOSE 8000
-
-ENTRYPOINT ["python3"]
-CMD ["app.py"]

@@ -1,11 +1,34 @@
 version: '2'
 services:
   web:
+    restart: always
     image: "openagua/rapid-watershed-delineation:latest"
+    expose:
+     - 8000
     ports:
-     - "80:8000"
+     - 8000:8000
+    volumes:
+     - /data:/home/cuencas/hydrodata
     environment:
-      CUENCAS_PATH: "~/data"
+      CUENCAS_PATH: /home/david/cuencas/data
+    command:
+      /usr/local/bin/gunicorn -w 2 -b :8000 web:app
+  worker:
+    image: openagua/rapid-watershed-delineation:latest
+    volumes:
+      - /data:/home/cuencas/hydrodata
+    links:
+      - rabbit
+    depends_on:
+      - rabbit
+    command: celery worker -B -A web.app.celery
+#  nginx:
+#    restart: always
+#    build: ./nginx
+#    ports:
+#      - "80:80"
+#    depends_on:
+#      - web
   rabbit:
     image: "rabbitmq:3-management"
     hostname: "rabbit"

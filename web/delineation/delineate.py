@@ -53,7 +53,6 @@ def delineate(rootpath=None, point=None, name=None, max_level=7, cell_size=15, o
         hydrobasins[level] = basins
 
     # STEP 3: Delineate from HydroBASINS
-
     if mode == 'hybrid':
         hydropath = PATH
         h5path = os.path.join(rootpath, 'hydrobasins', 'hybas_{}_v1c.h5'.format(region01))
