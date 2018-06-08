@@ -9,18 +9,11 @@ RUN apt-get update \
 
 RUN apt-get install -y software-properties-common
 RUN apt-add-repository ppa:ubuntugis/ppa \
-    && apt-get update \
-    && apt-get install -y gdal-bin python3-gdal python-numpy libgdal-dev
+  && apt-get update \
+  && apt-get install -y gdal-bin python3-gdal python3-numpy libgdal-dev
 
-RUN pip3 install rasterio
-
-RUN pip3 install gunicorn celery pymongo
-
-RUN pip3 install pandas
-RUN pip3 install fiona shapely geopandas kml2geojson simpledbf
-RUN pip3 install flask requests
-RUN pip3 install numexpr tables
+RUN pip3 install --no-cache-dir rasterio pandas fiona shapely geopandas kml2geojson simpledbf numexpr tables
+RUN pip3 install --no-cache-dir gunicorn celery pymongo flask requests
 
 # bundle app source
-ADD . /app
-WORKDIR /app
+COPY . /app
