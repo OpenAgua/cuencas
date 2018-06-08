@@ -2,7 +2,7 @@ version: '2'
 services:
   web:
     restart: always
-    build: ./web
+    image: "openagua/rapid-watershed-delineation:latest"
     expose:
      - "8000"
     ports:
@@ -12,9 +12,9 @@ services:
 #    environment:
 #      CUENCAS_PATH: "../data"
     command:
-      gunicorn web.app:app -b :8000 --name app --log-level=debug
+      gunicorn app:app -b :8000 --name app --log-level=debug
   worker:
-    build: ./web
+    image: "openagua/rapid-watershed-delineation:latest"
     volumes:
       - "/data:/home/ubuntu/data"
     links:
@@ -30,18 +30,13 @@ services:
 #    depends_on:
 #      - web
   rabbit:
-    image: "rabbitmq:3-management"
-    hostname: "rabbit"
-    environment:
-      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
-      RABBITMQ_DEFAULT_USER: "rabbitmq"
-      RABBITMQ_DEFAULT_PASS: "rabbitmq"
-      RABBITMQ_DEFAULT_VHOST: "/"
-    ports:
-      - "15672:15672"
-      - "5672:5672"
-    labels:
-      NAME: "rabbitmq"
+      hostname: rabbit
+      image: rabbitmq:latest
+      environment:
+          - RABBITMQ_DEFAULT_USER=admin
+          - RABBITMQ_DEFAULT_PASS=mypass
+      ports:
+          - "5673:5672"
   mongo:
     image: mongo
     volumes:
