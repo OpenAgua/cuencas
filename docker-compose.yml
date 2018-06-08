@@ -12,7 +12,7 @@ services:
 #    environment:
 #      CUENCAS_PATH: "../data"
     command:
-      gunicorn -w 2 -b :8000 web:app
+      gunicorn web.app:app -b :8000 --name app --log-level=debug
   worker:
     image: "openagua/rapid-watershed-delineation:latest"
     volumes:
