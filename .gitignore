@@ -20,3 +20,5 @@ Dockerrun.local.json
 data/
 
 *.zip
+
+instance/
