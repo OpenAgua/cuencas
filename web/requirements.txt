@@ -42,6 +42,6 @@ simpledbf==0.2.6
 six==1.11.0
 snuggs==1.4.1
 tables==3.4.2
-urllib3==1.22
+urllib3==1.26.5
 vine==1.1.4
 Werkzeug==0.14.1
